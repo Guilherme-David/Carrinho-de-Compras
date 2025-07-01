@@ -41,7 +41,7 @@ def register():
             user.save() # Salva o usuario na sessão
             login_user(user) # Loga o Usuário
             flash('Cadastro Realizado com Sucesso') # Mensagem de Sucesso
-            return redirect(url_for('dash'))
+            return redirect(url_for('login'))
         
     return render_template('pages/auth/register.html')
 
@@ -69,15 +69,65 @@ def login():
     return render_template('pages/auth/login.html')
 
 # 8 - Rotas Bloqueadas por Login
-# 8.1 - Dashboard
+# 8.1 - Produtos
 @app.route('/dashboard')
 @login_required # precisa de login
 def dash():
-    return render_template('pages/dash.html')
+    produtos = get_produtos()
+    return render_template('pages/produtos.html', produtos=produtos)
+
+def get_produtos():
+    produtos =[{'nome': 'Tenis 1', 'preco': 200, 'id': 0},
+            {'nome': 'Camiseta', 'preco': 190, 'id': 1},
+            {'nome': 'Corrente', 'preco': 400, 'id': 2}]
+    return produtos
 
 # 8.2 - logout
 @app.route('/logout')
 @login_required
 def logout():
     logout_user() # desloga o usuario logado
+    session['usuarios'] = {}
     return redirect(url_for('index'))
+
+# 10 - Carrinho de Compras
+@app.route('/add_to_cart/<int:id>')
+@login_required
+def add_to_cart(id):
+    if 'carrinho' not in session:
+        session['carrinho'] = []
+
+    carrinho = session['carrinho']
+    
+    produtos = get_produtos()
+    for produto in produtos:
+        if id == produto['id']:
+            carrinho.append(produto['id'])
+
+    session['carrinho'] = carrinho
+    return redirect(url_for('dash'))
+
+@app.route('/remove_from_cart/<int:id>')
+@login_required
+def remove_from_cart(id):
+    for item in session['carrinho']:
+        if item == id:
+            session['carrinho'].remove(id)
+    return redirect(url_for('carrinho'))
+
+@app.route('/carrinho')
+@login_required
+def carrinho():
+    if 'carrinho' in session:
+            carrinho_ids = session.get('carrinho', [])
+    produtos_disponiveis = get_produtos()
+
+    carrinho_real = []
+    for produto_id in carrinho_ids:
+        for produto in produtos_disponiveis:
+            if produto['id'] == produto_id:
+                carrinho_real.append(produto)
+                break
+
+        
+    return render_template('pages/cart.html', carrinho=carrinho_real, produtos=get_produtos())

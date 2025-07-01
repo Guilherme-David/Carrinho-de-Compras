@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+
+{% block conteudo %}
+
+    <h1>Oi, {{current_user.email}}</h1>
+    
+    {% for produto in produtos %}
+        <p>{{ produto.nome }} - {{ produto.preco }} <a href="{{ url_for('add_to_cart', id=produto.id) }}">Adicionar</a></p>
+        <p>{{ produto.nome }} - {{ produto.preco }} <a href="{{ url_for('remove_from_cart', id=produto.id) }}">Remover</a></p>
+    {% endfor %}
+    <a href="{{ url_for('carrinho')}}"> Ver Carrinho </a>
+    <form action="{{url_for('logout')}}">
+        <button>Sair</button>
+    </form>
+
+{% endblock %}

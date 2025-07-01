@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block conteudo %}
+
+{% if carrinho %}
+    <ul>
+        {% for item in carrinho %}
+            <li>{{ item['nome'] }} - R$ {{ item['preco'] }}</li>
+        {% endfor %}
+    </ul>
+    <p><strong>Total:</strong> R$ {{ carrinho | map(attribute='preco') | sum }}</p>
+{% endif %}
+
+{% endblock %}

@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% extends "layout.html" %}
 
 {% block conteudo %}
 
@@ -9,6 +10,13 @@
         {% endfor %}
     </ul>
     <p><strong>Total:</strong> R$ {{ carrinho | map(attribute='preco') | sum }}</p>
+    <button><a href="{{url_for("clear_cart")}}">Limpar Carrinho</a></button>
+    <button><a href="{{url_for('index')}}">Volte ao Início</a></button>
+
+{% else %}
+
+<p>Carrinho Vazio</p>
+<button><a href="{{url_for("dash")}}">Volte às Compras</a></button>    
 {% endif %}
 
 {% endblock %}

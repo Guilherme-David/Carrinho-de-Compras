@@ -40,7 +40,7 @@ def register():
             user = User(email=email, senha=senha) # Cria o Usuário
             user.save() # Salva o usuario na sessão
             login_user(user) # Loga o Usuário
-            flash('Cadastro Realizado com Sucesso') # Mensagem de Sucesso
+            flash('Cadastro Realizado com Sucesso', 'success') # Mensagem de Sucesso
             return redirect(url_for('login'))
         
     return render_template('pages/auth/register.html')
@@ -54,16 +54,16 @@ def login():
         
         user = User.find(email) # Procura o usuario com base no email
         if user == False: # Se o retorno acima for False, o email não está cadastrado
-            flash('Email Inexistente, Faça seu Cadastro') # Email inexistente
+            flash('Email Inexistente, Faça seu Cadastro', 'error') # Email inexistente
             return redirect(url_for('register'))
 
         # Se o email existir
         if check_password_hash(user.senha, senha): # Se a senha estiver correta
             login_user(user)
-            flash('Você está logado')
+            flash('Você está logado', 'success')
             return redirect(url_for('dash'))
         else:
-            flash('Dados incorretos') # Senha incorreta
+            flash('Dados incorretos', 'error') # Senha incorreta
             return redirect(url_for('login'))
         
     return render_template('pages/auth/login.html')
@@ -74,12 +74,16 @@ def login():
 @login_required # precisa de login
 def dash():
     produtos = get_produtos()
-    return render_template('pages/produtos.html', produtos=produtos)
+    if 'carrinho' not in session:
+        session['carrinho'] = []
+
+    carrinho = session['carrinho']
+    return render_template('pages/produtos.html', produtos=produtos, carrinho=carrinho)
 
 def get_produtos():
-    produtos =[{'nome': 'Tenis 1', 'preco': 200, 'id': 0},
-            {'nome': 'Camiseta', 'preco': 190, 'id': 1},
-            {'nome': 'Corrente', 'preco': 400, 'id': 2}]
+    produtos =[{'nome': 'Tenis 1', 'preco': 200, 'id': 0, 'qtd': 0},
+            {'nome': 'Camiseta', 'preco': 190, 'id': 1, 'qtd': 0},
+            {'nome': 'Corrente', 'preco': 400, 'id': 2, 'qtd': 0}]
     return produtos
 
 # 8.2 - logout
@@ -87,7 +91,8 @@ def get_produtos():
 @login_required
 def logout():
     logout_user() # desloga o usuario logado
-    session['usuarios'] = {}
+    session.pop('usuarios')
+    session.pop('carrinho')
     return redirect(url_for('index'))
 
 # 10 - Carrinho de Compras
@@ -110,10 +115,21 @@ def add_to_cart(id):
 @app.route('/remove_from_cart/<int:id>')
 @login_required
 def remove_from_cart(id):
-    for item in session['carrinho']:
+    carrinho = session['carrinho']
+    for item in carrinho:
         if item == id:
-            session['carrinho'].remove(id)
-    return redirect(url_for('carrinho'))
+            carrinho.remove(id)
+            session['carrinho'] = carrinho
+            break
+    return redirect(url_for('dash'))
+
+@app.route('/clear_cart')
+@login_required
+def clear_cart():
+    carrinho = session['carrinho']
+    carrinho = []
+    session['carrinho'] = carrinho
+    return redirect(url_for('dash'))
 
 @app.route('/carrinho')
 @login_required
@@ -128,6 +144,6 @@ def carrinho():
             if produto['id'] == produto_id:
                 carrinho_real.append(produto)
                 break
-
+    print(carrinho_real)
         
     return render_template('pages/cart.html', carrinho=carrinho_real, produtos=get_produtos())
